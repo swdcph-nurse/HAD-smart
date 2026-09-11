@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ScanLine } from 'lucide-react'
+import { ScanLine, LayoutDashboard } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { supabase } from '@/lib/supabase'
 import { ROLE_LABEL_TH } from '@/lib/types'
@@ -40,7 +40,7 @@ export function HomePage() {
         </div>
       )}
 
-      {!isSupervisory && (
+      {!isSupervisory ? (
         <Link
           to="/checklist"
           className="flex items-center gap-3 rounded-lg border border-accent/30 bg-accent-soft px-4 py-3.5 transition-colors hover:border-accent"
@@ -51,18 +51,23 @@ export function HomePage() {
             <p className="text-xs text-ink-muted">บันทึกตรวจสอบก่อน / ขณะ / หลังให้ยา</p>
           </div>
         </Link>
+      ) : (
+        <Link
+          to="/dashboard"
+          className="flex items-center gap-3 rounded-lg border border-accent/30 bg-accent-soft px-4 py-3.5 transition-colors hover:border-accent"
+        >
+          <LayoutDashboard className="h-5 w-5 shrink-0 text-accent" strokeWidth={1.75} />
+          <div className="flex-1">
+            <p className="text-sm font-medium text-ink">ดูแดชบอร์ดนิเทศ</p>
+            <p className="text-xs text-ink-muted">สรุปภาพรวมและ Alert ที่ต้องติดตาม</p>
+          </div>
+        </Link>
       )}
 
       <section className="space-y-3">
         <h2 className="text-sm font-medium text-ink-muted">โมดูลของระบบ</h2>
 
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {isSupervisory ? (
-            <>
-              <RoadmapCard title="แดชบอร์ดนิเทศ" phase="เฟส 4" />
-              <RoadmapCard title="รายการ Alert ที่ต้องติดตาม" phase="เฟส 4" />
-            </>
-          ) : null}
           <RoadmapCard title="แบบประเมินพฤติกรรม และ Pre/Post-test" phase="เฟส 5" />
         </div>
       </section>

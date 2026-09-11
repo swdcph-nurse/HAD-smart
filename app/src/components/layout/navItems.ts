@@ -15,8 +15,8 @@ export function getNavItems(role: Role | undefined): NavItem[] {
   if (isSupervisory) {
     return [
       { to: '/', label: 'หน้าแรก', icon: Home },
-      { to: '/dashboard', label: 'แดชบอร์ด', icon: LayoutDashboard, comingSoon: true },
-      { to: '/alerts', label: 'Alert', icon: BellRing, comingSoon: true },
+      { to: '/dashboard', label: 'แดชบอร์ด', icon: LayoutDashboard },
+      { to: '/alerts', label: 'Alert', icon: BellRing },
       { to: '/profile', label: 'โปรไฟล์', icon: UserRound },
     ]
   }
@@ -24,7 +24,7 @@ export function getNavItems(role: Role | undefined): NavItem[] {
   return [
     { to: '/', label: 'หน้าแรก', icon: Home },
     { to: '/checklist', label: 'Checklist', icon: ScanLine },
-    { to: '/alerts', label: 'Alert', icon: BellRing, comingSoon: true },
+    { to: '/alerts', label: 'Alert', icon: BellRing },
     { to: '/profile', label: 'โปรไฟล์', icon: UserRound },
   ]
 }

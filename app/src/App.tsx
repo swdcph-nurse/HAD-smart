@@ -8,6 +8,9 @@ import { ProfilePage } from '@/pages/ProfilePage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { ChecklistHomePage } from '@/pages/checklist/ChecklistHomePage'
 import { ChecklistFormPage } from '@/pages/checklist/ChecklistFormPage'
+import { DashboardPage } from '@/pages/dashboard/DashboardPage'
+import { AlertsPage } from '@/pages/alerts/AlertsPage'
+import { RoleGate } from '@/components/layout/RoleGate'
 
 export default function App() {
   return (
@@ -23,7 +26,10 @@ export default function App() {
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/checklist" element={<ChecklistHomePage />} />
               <Route path="/checklist/:phase" element={<ChecklistFormPage />} />
-              {/* /alerts, /dashboard จะเพิ่มในเฟส 4 ตาม ROADMAP.md */}
+              <Route path="/alerts" element={<AlertsPage />} />
+              <Route element={<RoleGate allow={['supervisor', 'admin', 'executive']} />}>
+                <Route path="/dashboard" element={<DashboardPage />} />
+              </Route>
             </Route>
           </Route>
 
