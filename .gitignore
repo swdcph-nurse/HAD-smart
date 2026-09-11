@@ -1,0 +1,15 @@
+# Node / build artifacts (โฟลเดอร์ app มีของตัวเองอยู่แล้ว อันนี้กันเผื่อระดับ root)
+node_modules/
+dist/
+dist-ssr/
+
+# Environment files ที่มีความลับ ห้าม commit ขึ้น GitHub เด็ดขาด
+.env
+.env.local
+.env.*.local
+
+# OS / editor
+.DS_Store
+.vscode/*
+!.vscode/extensions.json
+.idea
