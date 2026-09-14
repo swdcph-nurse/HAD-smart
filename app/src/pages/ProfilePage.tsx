@@ -1,43 +1,20 @@
+import { useEffect, useState } from 'react'
+import { ShieldCheck, UserPlus } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { ROLE_LABEL_TH, type NurseLevel } from '@/lib/types'
+import { supabase } from '@/lib/supabase'
 
-const NURSE_LEVEL_LABEL_TH: Record<NurseLevel, string> = {
-  novice: 'Novice',
-  advanced_beginner: 'Advanced Beginner',
-  competent: 'Competent',
-  proficient: 'Proficient',
-  expert: 'Expert',
-}
+const NURSE_LEVEL_LABEL_TH: Record<NurseLevel, string> = { novice:'Novice', advanced_beginner:'Advanced Beginner', competent:'Competent', proficient:'Proficient', expert:'Expert' }
+type AdminRow={id:string;display_code:string;full_name:string|null;is_active:boolean}
 
-export function ProfilePage() {
-  const { profile } = useAuth()
-  if (!profile) return null
-
-  const rows: Array<[string, string]> = [
-    ['รหัสผู้ใช้', profile.display_code],
-    ['บทบาท', ROLE_LABEL_TH[profile.role]],
-  ]
-  if (profile.nurse_level) {
-    rows.push(['ระดับความสามารถ', NURSE_LEVEL_LABEL_TH[profile.nurse_level]])
-  }
-
-  return (
-    <div className="max-w-xl space-y-6">
-      <h1 className="text-xl font-semibold text-ink">โปรไฟล์</h1>
-
-      <div className="divide-y divide-border overflow-hidden rounded-lg border border-border bg-surface">
-        {rows.map(([label, value]) => (
-          <div key={label} className="flex items-center justify-between px-4 py-3">
-            <span className="text-sm text-ink-muted">{label}</span>
-            <span className="text-sm font-medium text-ink">{value}</span>
-          </div>
-        ))}
-      </div>
-
-      <p className="text-xs leading-relaxed text-ink-muted">
-        การแก้ไขบทบาทหรือหอผู้ป่วยของบัญชีนี้ต้องดำเนินการโดยผู้ดูแลระบบเท่านั้น
-        หากข้อมูลไม่ถูกต้อง กรุณาติดต่อผู้ดูแลระบบของหน่วยงาน
-      </p>
-    </div>
-  )
+export function ProfilePage(){
+ const {profile}=useAuth();const [admins,setAdmins]=useState<AdminRow[]>([]);const [name,setName]=useState('');const [email,setEmail]=useState('');const [code,setCode]=useState('');const [busy,setBusy]=useState(false);const [message,setMessage]=useState('');const [error,setError]=useState('')
+ useEffect(()=>{if(profile?.role==='admin')void loadAdmins()},[profile?.role])
+ async function loadAdmins(){const r=await supabase.from('profiles').select('id,display_code,full_name,is_active').eq('role','admin').order('display_code');if(!r.error)setAdmins((r.data??[]) as AdminRow[])}
+ async function addAdmin(){setError('');setMessage('');if(!name.trim()||!email.trim()){setError('กรุณาระบุชื่อและอีเมล');return}setBusy(true);const r=await supabase.functions.invoke('admin-invite-user',{body:{email:email.trim(),full_name:name.trim(),display_code:code.trim()}});setBusy(false);if(r.error){setError(r.error.message);return}setMessage('ส่งคำเชิญผู้ดูแลระบบแล้ว ผู้รับจะตั้งรหัสผ่านจากอีเมลเชิญ');setName('');setEmail('');setCode('');await loadAdmins()}
+ if(!profile)return null
+ const rows:Array<[string,string]>=[['รหัสผู้ใช้',profile.display_code],['บทบาท',ROLE_LABEL_TH[profile.role]]];if(profile.nurse_level)rows.push(['ระดับความสามารถ',NURSE_LEVEL_LABEL_TH[profile.nurse_level]])
+ return <div className="max-w-2xl space-y-6"><h1 className="text-xl font-semibold text-ink">โปรไฟล์</h1><div className="divide-y divide-border overflow-hidden rounded-lg border border-border bg-surface">{rows.map(([label,value])=><div key={label} className="flex items-center justify-between px-4 py-3"><span className="text-sm text-ink-muted">{label}</span><span className="text-sm font-medium text-ink">{value}</span></div>)}</div><p className="text-xs leading-relaxed text-ink-muted">การแก้ไขบทบาทหรือหอผู้ป่วยของบัญชีนี้ต้องดำเนินการโดยผู้ดูแลระบบเท่านั้น</p>
+ {profile.role==='admin'&&<section className="rounded-2xl border border-border bg-surface p-5"><div className="mb-4 flex items-center gap-2"><ShieldCheck size={19}/><div><h2 className="font-semibold text-ink">จัดการผู้ดูแลระบบ</h2><p className="text-xs text-ink-muted">เฉพาะผู้ดูแลระบบที่ Login อยู่เท่านั้น</p></div></div><div className="grid gap-3 md:grid-cols-3"><input value={name} onChange={e=>setName(e.target.value)} placeholder="ชื่อ-นามสกุล" className="rounded-xl border border-border bg-white px-3 py-2.5"/><input value={email} onChange={e=>setEmail(e.target.value)} type="email" placeholder="Email" className="rounded-xl border border-border bg-white px-3 py-2.5"/><input value={code} onChange={e=>setCode(e.target.value)} placeholder="รหัสผู้ดูแล (ถ้ามี)" className="rounded-xl border border-border bg-white px-3 py-2.5"/></div><button disabled={busy} onClick={()=>void addAdmin()} className="mt-4 inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50"><UserPlus size={17}/>{busy?'กำลังส่งคำเชิญ…':'เพิ่มผู้ดูแลระบบ'}</button>{message&&<p className="mt-3 text-sm text-emerald-700">{message}</p>}{error&&<p className="mt-3 text-sm text-red-600">{error}</p>}<div className="mt-5 border-t border-border pt-4"><p className="mb-2 text-sm font-semibold">ผู้ดูแลระบบปัจจุบัน</p>{admins.map(a=><div key={a.id} className="flex items-center justify-between border-b border-border py-2 text-sm"><span>{a.full_name||'ไม่ระบุชื่อ'} <span className="text-xs text-ink-muted">({a.display_code})</span></span><span className="text-xs text-emerald-700">{a.is_active?'ใช้งาน':'ปิดใช้งาน'}</span></div>)}</div></section>}
+ </div>
 }
