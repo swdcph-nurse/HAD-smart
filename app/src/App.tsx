@@ -3,6 +3,7 @@ import { AuthProvider } from '@/context/AuthContext'
 import { ProtectedRoute } from '@/components/layout/ProtectedRoute'
 import { AppShell } from '@/components/layout/AppShell'
 import { LoginPage } from '@/pages/LoginPage'
+import { LandingPage } from '@/pages/LandingPage'
 import { HomePage } from '@/pages/HomePage'
 import { ProfilePage } from '@/pages/ProfilePage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
@@ -15,34 +16,20 @@ import { RoleGate } from '@/components/layout/RoleGate'
 import { KioskPage } from '@/pages/KioskPage'
 
 export default function App() {
-  return (
-    <BrowserRouter>
-      <AuthProvider>
-        <Routes>
-          {/* Public frontline workflow: no login required */}
-          <Route path="/" element={<KioskPage />} />
-          <Route path="/kiosk" element={<KioskPage />} />
-
-          {/* Login is retained only for the protected supervisor/admin area */}
-          <Route path="/login" element={<LoginPage />} />
-
-          <Route element={<ProtectedRoute />}>
-            <Route element={<AppShell />}>
-              <Route path="/home" element={<HomePage />} />
-              <Route path="/profile" element={<ProfilePage />} />
-              <Route path="/checklist" element={<ChecklistHomePage />} />
-              <Route path="/checklist/:phase" element={<ChecklistFormPage />} />
-              <Route path="/assessment" element={<AssessmentPage />} />
-              <Route path="/alerts" element={<AlertsPage />} />
-              <Route element={<RoleGate allow={['supervisor', 'admin', 'executive']} />}>
-                <Route path="/dashboard" element={<DashboardPage />} />
-              </Route>
-            </Route>
-          </Route>
-
-          <Route path="*" element={<NotFoundPage />} />
-        </Routes>
-      </AuthProvider>
-    </BrowserRouter>
-  )
+  return <BrowserRouter><AuthProvider><Routes>
+    <Route path="/" element={<LandingPage />} />
+    <Route path="/nurse" element={<KioskPage />} />
+    <Route path="/kiosk" element={<KioskPage />} />
+    <Route path="/login" element={<LoginPage />} />
+    <Route element={<ProtectedRoute />}><Route element={<AppShell />}>
+      <Route path="/home" element={<HomePage />} />
+      <Route path="/profile" element={<ProfilePage />} />
+      <Route path="/checklist" element={<ChecklistHomePage />} />
+      <Route path="/checklist/:phase" element={<ChecklistFormPage />} />
+      <Route path="/assessment" element={<AssessmentPage />} />
+      <Route path="/alerts" element={<AlertsPage />} />
+      <Route element={<RoleGate allow={['supervisor', 'admin', 'executive']} />}><Route path="/dashboard" element={<DashboardPage />} /></Route>
+    </Route></Route>
+    <Route path="*" element={<NotFoundPage />} />
+  </Routes></AuthProvider></BrowserRouter>
 }
