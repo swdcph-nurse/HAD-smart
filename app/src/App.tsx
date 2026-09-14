@@ -16,6 +16,7 @@ import { AlertsPage } from '@/pages/alerts/AlertsPage'
 import { AssessmentPage } from '@/pages/assessment/AssessmentPage'
 import { RoleGate } from '@/components/layout/RoleGate'
 import { KioskPage } from '@/pages/KioskPage'
+import { DrugManagementPage } from '@/pages/DrugManagementPage'
 export default function App() {
   return <BrowserRouter><AuthProvider><Routes>
     <Route path="/" element={<LandingPage />} />
@@ -32,6 +33,7 @@ export default function App() {
       <Route path="/assessment" element={<AssessmentPage />} />
       <Route path="/alerts" element={<AlertsPage />} />
       <Route element={<RoleGate allow={['supervisor', 'admin', 'executive']} />}><Route path="/dashboard" element={<DashboardPage />} /></Route>
+      <Route element={<RoleGate allow={['admin']} />}><Route path="/admin/drugs" element={<DrugManagementPage />} /></Route>
     </Route></Route>
     <Route path="*" element={<NotFoundPage />} />
   </Routes></AuthProvider></BrowserRouter>
