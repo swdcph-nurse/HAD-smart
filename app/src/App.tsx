@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from '@/context/AuthContext'
 import { ProtectedRoute } from '@/components/layout/ProtectedRoute'
 import { AppShell } from '@/components/layout/AppShell'
@@ -19,11 +19,16 @@ export default function App() {
     <BrowserRouter>
       <AuthProvider>
         <Routes>
+          {/* Public frontline workflow: no login required */}
+          <Route path="/" element={<KioskPage />} />
           <Route path="/kiosk" element={<KioskPage />} />
+
+          {/* Login is retained only for the protected supervisor/admin area */}
           <Route path="/login" element={<LoginPage />} />
+
           <Route element={<ProtectedRoute />}>
             <Route element={<AppShell />}>
-              <Route path="/" element={<HomePage />} />
+              <Route path="/home" element={<HomePage />} />
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/checklist" element={<ChecklistHomePage />} />
               <Route path="/checklist/:phase" element={<ChecklistFormPage />} />
@@ -34,6 +39,7 @@ export default function App() {
               </Route>
             </Route>
           </Route>
+
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </AuthProvider>
