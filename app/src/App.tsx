@@ -12,12 +12,14 @@ import { DashboardPage } from '@/pages/dashboard/DashboardPage'
 import { AlertsPage } from '@/pages/alerts/AlertsPage'
 import { AssessmentPage } from '@/pages/assessment/AssessmentPage'
 import { RoleGate } from '@/components/layout/RoleGate'
+import { KioskPage } from '@/pages/KioskPage'
 
 export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
         <Routes>
+          <Route path="/kiosk" element={<KioskPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route element={<ProtectedRoute />}>
             <Route element={<AppShell />}>
