@@ -10,6 +10,7 @@ import { ChecklistHomePage } from '@/pages/checklist/ChecklistHomePage'
 import { ChecklistFormPage } from '@/pages/checklist/ChecklistFormPage'
 import { DashboardPage } from '@/pages/dashboard/DashboardPage'
 import { AlertsPage } from '@/pages/alerts/AlertsPage'
+import { AssessmentPage } from '@/pages/assessment/AssessmentPage'
 import { RoleGate } from '@/components/layout/RoleGate'
 
 export default function App() {
@@ -18,21 +19,19 @@ export default function App() {
       <AuthProvider>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
-
-          {/* ทุกเส้นทางด้านล่างนี้ต้อง login ก่อน (ดู ProtectedRoute) */}
           <Route element={<ProtectedRoute />}>
             <Route element={<AppShell />}>
               <Route path="/" element={<HomePage />} />
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/checklist" element={<ChecklistHomePage />} />
               <Route path="/checklist/:phase" element={<ChecklistFormPage />} />
+              <Route path="/assessment" element={<AssessmentPage />} />
               <Route path="/alerts" element={<AlertsPage />} />
               <Route element={<RoleGate allow={['supervisor', 'admin', 'executive']} />}>
                 <Route path="/dashboard" element={<DashboardPage />} />
               </Route>
             </Route>
           </Route>
-
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </AuthProvider>
