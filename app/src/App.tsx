@@ -4,6 +4,7 @@ import { ProtectedRoute } from '@/components/layout/ProtectedRoute'
 import { AppShell } from '@/components/layout/AppShell'
 import { LoginPage } from '@/pages/LoginPage'
 import { LandingPage } from '@/pages/LandingPage'
+import { NurseRolePage } from '@/pages/NurseRolePage'
 import { HomePage } from '@/pages/HomePage'
 import { ProfilePage } from '@/pages/ProfilePage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
@@ -18,7 +19,9 @@ import { KioskPage } from '@/pages/KioskPage'
 export default function App() {
   return <BrowserRouter><AuthProvider><Routes>
     <Route path="/" element={<LandingPage />} />
-    <Route path="/nurse" element={<KioskPage />} />
+    <Route path="/nurse" element={<NurseRolePage />} />
+    <Route path="/nurse/med" element={<KioskPage />} />
+    <Route path="/nurse/charge" element={<KioskPage />} />
     <Route path="/kiosk" element={<KioskPage />} />
     <Route path="/login" element={<LoginPage />} />
     <Route element={<ProtectedRoute />}><Route element={<AppShell />}>
