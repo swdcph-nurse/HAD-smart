@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
 
-const HAD_SMART_LOGO = '/brand/had-smart.jpg?v=20260916'
+const HAD_SMART_LOGO = '/had-smart.png?v=20260916'
 
 export function LoginPage() {
   const { session, loading, signInWithPassword } = useAuth()
