@@ -1,5 +1,7 @@
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, ArrowRight, ShieldCheck, Stethoscope, UserRound } from 'lucide-react'
+import { ArrowLeft, ArrowRight, ShieldCheck, UserRound } from 'lucide-react'
+
+const HAD_SMART_LOGO = '/had-smart.png?v=20260916'
 
 export function NurseRolePage() {
   const navigate = useNavigate()
@@ -9,7 +11,7 @@ export function NurseRolePage() {
         <section className="w-full rounded-[32px] border bg-white p-6 shadow-sm md:p-10">
           <button onClick={() => navigate('/')} className="mb-8 inline-flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-teal-700"><ArrowLeft size={17}/>กลับหน้าหลัก</button>
           <div className="text-center">
-            <div className="mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-teal-50 text-teal-700"><Stethoscope size={32}/></div>
+            <img src={HAD_SMART_LOGO} alt="HAD Smart" className="mx-auto h-16 w-16 rounded-2xl object-cover shadow-sm" />
             <h1 className="mt-5 text-3xl font-black">พยาบาลประจำการ</h1>
             <p className="mt-2 text-sm text-slate-500">เลือกบทบาทของคุณสำหรับ Medication Event นี้</p>
           </div>
