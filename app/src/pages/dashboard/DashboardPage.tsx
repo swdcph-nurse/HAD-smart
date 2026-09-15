@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { ClipboardCheck, ShieldCheck, AlertTriangle, CheckCircle2, RefreshCw, Download, Clock3, HeartPulse } from 'lucide-react'
-import { fetchActiveHadDrugs, fetchMedicationSupervision, SUPERVISION_ITEMS, type SupervisionDashboardData } from '@/lib/dashboard'
+import { fetchActiveHadDrugs, fetchMedicationSupervision, type SupervisionDashboardData } from '@/lib/dashboard'
 import { LoadingScreen } from '@/components/ui/LoadingScreen'
 
 function isoDate(d: Date) { return d.toISOString().slice(0, 10) }
@@ -23,8 +23,8 @@ export function DashboardPage() {
     finally { setLoading(false) }
   }
 
-  useEffect(() => { fetchActiveHadDrugs().then(setDrugs).catch(() => setDrugs([])); load() }, [])
-  useEffect(() => { const t = window.setTimeout(() => { load() }, 0); return () => window.clearTimeout(t) }, [from, to, drugId])
+  useEffect(() => { fetchActiveHadDrugs().then(setDrugs).catch(() => setDrugs([])) }, [])
+  useEffect(() => { load() }, [from, to, drugId])
 
   const criticalItems = useMemo(() => (data?.itemStats ?? []).filter((x) => x.critical), [data])
   const improvementItems = useMemo(() => [...(data?.itemStats ?? [])].sort((a, b) => a.rate - b.rate).slice(0, 5), [data])
@@ -77,16 +77,14 @@ export function DashboardPage() {
         <Kpi icon={CheckCircle2} label="ผ่านครบ 20 ข้อ" value={`${pct(data.complete20)}%`} sub={`${data.complete20} จาก ${data.total} ครั้ง`} />
         <Kpi icon={ShieldCheck} label="Critical ผ่าน" value={`${pct(data.criticalPass)}%`} sub={`${data.criticalPass} จาก ${data.total} ครั้ง`} />
         <Kpi icon={HeartPulse} label="ผ่าน 20 + Critical" value={`${pct(data.completeBoth)}%`} sub={`${data.completeBoth} จาก ${data.total} ครั้ง`} />
-        <Kpi icon={TrendingIcon} label="คะแนนเฉลี่ย 20 ข้อ" value={data.average20 === null ? '—' : `${data.average20}/20`} sub="ผลการนิเทศ" />
+        <Kpi icon={ClipboardCheck} label="คะแนนเฉลี่ย 20 ข้อ" value={data.average20 === null ? '—' : `${data.average20}/20`} sub="ผลการนิเทศ" />
         <Kpi icon={Clock3} label="ปิด Workflow" value={`${data.workflowCloseRate ?? 0}%`} sub={`${data.completed} รายการเสร็จสมบูรณ์`} />
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[1.5fr_1fr]">
         <div className="rounded-2xl border border-border bg-surface p-5">
-          <div className="mb-4 flex items-center justify-between"><div><h2 className="font-semibold text-ink">การปฏิบัติตามเกณฑ์รายข้อ</h2><p className="text-xs text-ink-muted">เรียงตามข้อ 1–20 • คลุมเกณฑ์เพื่อดูระดับการปฏิบัติ</p></div><span className="rounded-full bg-accent-soft px-3 py-1 text-xs font-semibold text-accent">20 Criteria</span></div>
-          <div className="space-y-3">
-            {data.itemStats.map(item => <ComplianceBar key={item.no} item={item} />)}
-          </div>
+          <div className="mb-4 flex items-center justify-between"><div><h2 className="font-semibold text-ink">การปฏิบัติตามเกณฑ์รายข้อ</h2><p className="text-xs text-ink-muted">เรียงตามข้อ 1–20 • แสดงอัตราการปฏิบัติตามจากผลนิเทศ</p></div><span className="rounded-full bg-accent-soft px-3 py-1 text-xs font-semibold text-accent">20 Criteria</span></div>
+          <div className="space-y-3">{data.itemStats.map(item => <ComplianceBar key={item.no} item={item} />)}</div>
         </div>
 
         <div className="space-y-6">
@@ -125,4 +123,3 @@ export function DashboardPage() {
 function Kpi({ icon: Icon, label, value, sub }: { icon: typeof ClipboardCheck; label: string; value: string | number; sub: string }) { return <div className="rounded-2xl border border-border bg-surface p-4"><Icon className="h-5 w-5 text-accent" /><p className="mt-3 text-xs text-ink-muted">{label}</p><p className="mt-1 text-2xl font-bold text-ink">{value}</p><p className="mt-1 text-[11px] text-ink-muted">{sub}</p></div> }
 function ComplianceBar({ item }: { item: { no: number; text: string; critical: boolean; rate: number } }) { const cls = item.rate >= 95 ? 'bg-emerald-500' : item.rate >= 90 ? 'bg-amber-500' : 'bg-red-500'; return <div><div className="mb-1.5 flex gap-2 text-xs"><span className="w-6 shrink-0 font-bold text-ink">{item.no}</span><span className="min-w-0 flex-1 text-ink">{item.text}{item.critical && <span className="ml-1.5 rounded-full bg-alert-red-soft px-1.5 py-0.5 text-[9px] font-bold text-alert-red">CRITICAL</span>}</span><span className="w-12 shrink-0 text-right font-semibold text-ink">{item.rate}%</span></div><div className="ml-8 h-2 overflow-hidden rounded-full bg-surface-sunken"><div className={`h-full rounded-full ${cls}`} style={{ width: `${item.rate}%` }} /></div></div> }
 function Placeholder({ label }: { label: string }) { return <div className="rounded-xl bg-surface-sunken p-3"><p className="text-xs text-ink-muted">{label}</p><p className="mt-2 text-sm font-semibold text-ink-muted">อยู่ระหว่างพัฒนา</p></div> }
-function TrendingIcon() { return <ClipboardCheck className="h-5 w-5 text-accent" /> }
