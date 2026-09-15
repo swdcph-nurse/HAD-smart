@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { AlertTriangle, ArrowLeft, CheckCircle2, Eye, Home, Pencil, Pill, RefreshCw, Search, ShieldCheck, UserRound, XCircle } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, Camera, CheckCircle2, Eye, Home, Pencil, Pill, RefreshCw, Search, ShieldCheck, UserRound, XCircle } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
 type Staff = { id: string; display_code?: string; full_name: string | null; position?: string | null }
@@ -33,6 +33,17 @@ const ITEMS: Item[] = [
 ]
 const btn = 'inline-flex items-center justify-center gap-2 rounded-xl border px-4 py-2 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50'
 const input = 'w-full rounded-xl border border-slate-200 bg-white px-4 py-3 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-100'
+
+function extractDrugId(value: string) {
+  const raw = value.trim()
+  if (!raw) return ''
+  try {
+    const url = new URL(raw)
+    const parts = url.pathname.split('/').filter(Boolean)
+    if (parts.length >= 2 && parts[parts.length - 2] === 'learn') return decodeURIComponent(parts[parts.length - 1])
+  } catch { /* raw QR value */ }
+  return raw
+}
 
 export function MedicationKioskPage() {
   const navigate = useNavigate()
@@ -100,9 +111,14 @@ export function MedicationKioskPage() {
     const r = await supabase.from('had_drugs').select('id,generic_name,compatible_solutions,preparation_method,injection_duration,other_precautions,route').eq('is_active', true).ilike('generic_name', `%${v}%`).order('generic_name').limit(20)
     if (!r.error) setDrugOptions((r.data ?? []) as Drug[])
   }
-  async function findDrug() {
-    if (!qr.trim()) { setError('กรุณาสแกน QR รายการยา'); return }
-    setBusy(true); const r = await supabase.rpc('kiosk_get_drug', { p_qr_value: qr.trim() }); setBusy(false)
+  async function findDrug(value = qr) {
+    const raw = value.trim()
+    const drugId = extractDrugId(raw)
+    if (!drugId) { setError('กรุณาสแกน QR รายการยา'); return }
+    setQr(raw)
+    setBusy(true)
+    const r = await supabase.rpc('kiosk_get_drug', { p_qr_value: drugId })
+    setBusy(false)
     if (r.error || !r.data) { setError(r.error?.message ?? 'ไม่พบรายการยา หรือ QR ไม่ถูกต้อง'); return }
     setDrug(r.data as Drug); setStep('learning')
   }
@@ -195,7 +211,51 @@ function SelfModal({ event, close }: { event: Event; close: () => void }) {
   return <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/50 p-4"><div className="max-h-[90vh] w-full max-w-3xl overflow-auto rounded-3xl bg-white p-6"><div className="flex items-center justify-between"><div><h2 className="text-xl font-bold">ผล Med Nurse Self-Assessment</h2><p className="text-sm text-slate-500">{event.drug_name ?? '-'} • {event.self_total ?? 0}/20</p></div><button className={btn} onClick={close}>ปิด</button></div><div className="mt-5 space-y-2">{ITEMS.map((x, i) => { const passed = scores[i] === true || scores[i] === 1 || scores[i] === 'true'; return <div key={x.no} className="flex items-center gap-3 rounded-xl bg-slate-50 p-3 text-sm"><span className="w-6 font-bold">{x.no}</span><span className="flex-1">{x.text}</span><span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold ${passed ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>{passed ? <CheckCircle2 size={16}/> : <XCircle size={16}/>} {passed ? 'ถูก' : 'ผิด'}</span></div> })}</div></div></div>
 }
 function Handoff({ event, chargeName, confirm }: { event: Event; chargeName: string; confirm: () => void }) { return <div className="fixed inset-0 z-[60] grid place-items-center bg-slate-950/60 p-4"><div className="w-full max-w-md rounded-3xl bg-white p-6 text-center shadow-2xl"><ShieldCheck className="mx-auto text-teal-700" size={40}/><h2 className="mt-3 text-xl font-bold">บันทึก Self-Assessment สำเร็จ</h2><p className="mt-2 text-sm text-slate-500">รายการนี้ถูกส่งต่อเพื่อประเมินซ้ำโดย</p><div className="mt-4 rounded-2xl bg-teal-50 p-4 font-bold text-teal-900">{chargeName}</div><p className="mt-4 text-sm">{event.drug_name ?? '-'} • {event.self_total ?? 0}/20</p><button onClick={confirm} className="mt-5 w-full rounded-xl bg-teal-700 px-5 py-3.5 font-semibold text-white">ยืนยัน และไปที่รายการของฉัน</button></div></div> }
-function Qr({ qr, setQr, query, setQuery, options, choose, find, busy }: { qr: string; setQr: (v: string) => void; query: string; setQuery: (v: string) => void; options: Drug[]; choose: (d: Drug) => void; find: () => void; busy: boolean }) { return <section className="mx-auto max-w-3xl"><Panel title="เลือกยา"><label className="block text-sm font-semibold">ค้นหาชื่อยา<input className={`${input} mt-2`} value={query} onChange={e => setQuery(e.target.value)} placeholder="พิมพ์ชื่อยา เช่น Norepinephrine"/></label>{options.length > 0 && <div className="mt-2 rounded-2xl border bg-white">{options.map(d => <button key={d.id} onClick={() => choose(d)} className="block w-full border-b p-4 text-left hover:bg-teal-50">{d.generic_name}</button>)}</div>}<div className="my-5 border-t pt-5"><label className="block text-sm font-semibold">หรือสแกน QR Card ยา<input className={`${input} mt-2`} value={qr} onChange={e => setQr(e.target.value)} onKeyDown={e => e.key === 'Enter' && find()} placeholder="QR value / Drug UUID"/></label><button onClick={find} disabled={busy} className="mt-3 w-full rounded-xl bg-teal-700 px-5 py-3 font-semibold text-white">เปิด Learning ของยา</button></div></Panel></section> }
+
+function Qr({ qr, setQr, query, setQuery, options, choose, find, busy }: { qr: string; setQr: (v: string) => void; query: string; setQuery: (v: string) => void; options: Drug[]; choose: (d: Drug) => void; find: (value?: string) => void; busy: boolean }) {
+  const [camera, setCamera] = useState(false)
+  return <section className="mx-auto max-w-3xl"><Panel title="เลือกยา"><label className="block text-sm font-semibold">ค้นหาชื่อยา<input className={`${input} mt-2`} value={query} onChange={e => setQuery(e.target.value)} placeholder="พิมพ์ชื่อยา เช่น Norepinephrine"/></label>{options.length > 0 && <div className="mt-2 rounded-2xl border bg-white">{options.map(d => <button key={d.id} onClick={() => choose(d)} className="block w-full border-b p-4 text-left hover:bg-teal-50">{d.generic_name}</button>)}</div>}<div className="my-5 border-t pt-5"><div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><label className="block flex-1 text-sm font-semibold">QR Card เดียวกันใช้สำหรับ Scan to Learn และเตรียมยา<input className={`${input} mt-2`} value={qr} onChange={e => setQr(e.target.value)} onKeyDown={e => e.key === 'Enter' && find()} placeholder="สแกนกล้อง หรือวาง Learning URL / QR value"/></label><button type="button" onClick={() => setCamera(v => !v)} className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-teal-300 bg-teal-50 px-4 py-3 text-sm font-semibold text-teal-800"><Camera size={18}/>{camera ? 'ปิดกล้อง' : 'เปิดกล้องสแกน QR'}</button></div>{camera && <CameraScanner onDetected={value => { setCamera(false); setQr(value); find(value) }} onError={message => setQr(qr || message)} />}<button onClick={() => find()} disabled={busy} className="mt-3 w-full rounded-xl bg-teal-700 px-5 py-3 font-semibold text-white">เปิด Learning ของยา</button></div></Panel></section>
+}
+
+function CameraScanner({ onDetected, onError }: { onDetected: (value: string) => void; onError: (value: string) => void }) {
+  const videoRef = useRef<HTMLVideoElement | null>(null)
+  const [status, setStatus] = useState('กำลังเปิดกล้อง…')
+  const [supported, setSupported] = useState(true)
+  useEffect(() => {
+    let stream: MediaStream | null = null
+    let timer = 0
+    let stopped = false
+    async function start() {
+      const Detector = (window as Window & { BarcodeDetector?: any }).BarcodeDetector
+      if (!Detector) { setSupported(false); setStatus('เบราว์เซอร์นี้ยังไม่รองรับการสแกน QR ผ่านกล้องในเว็บ กรุณาใช้ Chrome/Edge ที่รองรับ หรือป้อน QR URL ด้วยตนเอง'); onError('') ; return }
+      if (!navigator.mediaDevices?.getUserMedia) { setSupported(false); setStatus('อุปกรณ์นี้ไม่อนุญาตให้เว็บเข้าถึงกล้อง'); onError(''); return }
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false })
+        if (stopped || !videoRef.current) return
+        videoRef.current.srcObject = stream
+        await videoRef.current.play()
+        const detector = new Detector({ formats: ['qr_code'] })
+        const scan = async () => {
+          if (stopped || !videoRef.current) return
+          try {
+            const codes = await detector.detect(videoRef.current)
+            const value = codes?.[0]?.rawValue
+            if (value) { stopped = true; onDetected(value); return }
+          } catch { /* keep scanning */ }
+          timer = window.setTimeout(() => void scan(), 250)
+        }
+        await scan()
+      } catch (e) {
+        setSupported(false)
+        setStatus('ไม่สามารถเปิดกล้องได้ กรุณาอนุญาต Camera ใน Browser แล้วลองอีกครั้ง')
+        onError(e instanceof Error ? e.message : '')
+      }
+    }
+    void start()
+    return () => { stopped = true; if (timer) window.clearTimeout(timer); stream?.getTracks().forEach(track => track.stop()) }
+  }, [onDetected, onError])
+  return <div className="mt-4 overflow-hidden rounded-3xl border border-teal-200 bg-slate-950 p-3 shadow-inner"><div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-black">{supported ? <><video ref={videoRef} muted playsInline className="h-full w-full object-cover"/><div className="pointer-events-none absolute inset-8 rounded-3xl border-2 border-white/80"><div className="absolute left-1/2 top-0 h-8 w-1 -translate-x-1/2 bg-teal-400"/><div className="absolute bottom-0 left-1/2 h-8 w-1 -translate-x-1/2 bg-teal-400"/><div className="absolute left-0 top-1/2 h-1 w-8 -translate-y-1/2 bg-teal-400"/><div className="absolute right-0 top-1/2 h-1 w-8 -translate-y-1/2 bg-teal-400"/></div></> : <div className="grid h-full place-items-center p-6 text-center text-sm text-white">{status}</div>}</div><div className="px-2 pb-1 pt-3 text-center text-xs text-white/75">{supported ? 'วาง QR Card ให้อยู่ในกรอบ • ระบบจะสแกนอัตโนมัติ' : status}</div></div>
+}
 function Learning({ drug, next }: { drug: Drug; next: () => void }) { return <section className="mx-auto max-w-4xl"><Panel title={`Learning ก่อนเตรียมยา • ${drug.generic_name}`}><div className="grid gap-4 md:grid-cols-2"><Box title="สารละลายที่ใช้ได้" value={drug.compatible_solutions}/><Box title="วิธีเตรียมยา" value={drug.preparation_method}/><Box title="ระยะเวลาที่ฉีด" value={drug.injection_duration}/><Box title="ข้อควรระวัง" value={drug.other_precautions}/></div><button onClick={next} className="mt-6 w-full rounded-xl bg-teal-700 px-5 py-3 font-semibold text-white">รับทราบ Learning และไปเตรียมยา</button></Panel></section> }
 function Prepare({ drug, staff, selected, event, busy, save, cancel }: { drug: Drug; staff: Staff[]; selected: Staff | null; event: Event | null; busy: boolean; save: (e: FormEvent<HTMLFormElement>) => void; cancel: () => void }) { const [reviewer, setReviewer] = useState(event?.nurse2_id ?? ''); const reviewers = staff.filter(s => s.id !== selected?.id); useEffect(() => setReviewer(event?.nurse2_id ?? ''), [event?.nurse2_id]); return <section className="mx-auto max-w-4xl"><form onSubmit={save} className="rounded-3xl border bg-white p-6"><h1 className="text-2xl font-bold">เตรียมยา: {drug.generic_name}</h1><div className="mt-6 grid gap-4 md:grid-cols-2"><Field label="เตียง/ห้อง" name="bed_code" value={event?.bed_code ?? event?.bed_or_room ?? ''} required/><Field label="HN" name="hn" value={event?.hn ?? ''} required/><Field label="ชื่อผู้ป่วย" name="patient_name" value={event?.patient_name ?? ''} required/><Field label="แผน/อัตราส่วน" name="ratio_plan" value={event?.ordered_ratio ?? ''}/><Field label="ขนาดยา" name="dose" value={event?.dose_amount ?? ''} required/><Field label="สารน้ำที่ผสม" name="fluid_mixed" value={event?.diluent ?? ''} required/><Field label="ปริมาตรสารน้ำ" name="fluid_volume" value={event?.diluent_volume ?? ''}/><Field label="อัตราการให้ (ml/hr)" name="rate_ml_hr" value={event?.administration_rate_ml_hr ?? ''} required/></div><label className="mt-5 block text-sm font-semibold">Charge Nurse ที่ส่งให้ตรวจสอบ<select name="nurse2_id" value={reviewer} onChange={e => setReviewer(e.target.value)} className={`${input} mt-2`} required><option value="">เลือก Charge Nurse</option>{reviewers.map(s => <option key={s.id} value={s.id}>{s.full_name ?? 'ไม่ระบุชื่อ'}</option>)}</select></label><div className="mt-6 flex gap-3"><button type="button" onClick={cancel} className={`${btn} flex-1`}>ยกเลิก</button><button disabled={busy} className="flex-1 rounded-xl bg-teal-700 px-5 py-3 font-semibold text-white">{busy ? 'กำลังบันทึก...' : event ? 'แก้ไขและส่งตรวจใหม่' : 'บันทึกและส่งให้ Charge Nurse'}</button></div></form></section> }
 function Field({ label, name, value, required }: { label: string; name: string; value: string; required?: boolean }) { return <label className="block"><span className="mb-2 block text-sm font-medium">{label}</span><input className={input} name={name} defaultValue={value} required={required}/></label> }
