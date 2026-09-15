@@ -2,6 +2,8 @@ import { useState, type FormEvent } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
 
+const HAD_SMART_LOGO = '/brand/had-smart.jpg?v=20260916'
+
 export function LoginPage() {
   const { session, loading, signInWithPassword } = useAuth()
   const [email, setEmail] = useState('')
@@ -25,7 +27,7 @@ export function LoginPage() {
       <div className="w-full max-w-sm">
         <header className="mb-8">
           <div className="mb-5 flex items-center gap-3">
-            <img src="/brand/had-smart.jpg" alt="HAD Smart" className="h-16 w-16 rounded-2xl object-cover shadow-sm" />
+            <img src={HAD_SMART_LOGO} alt="HAD Smart" className="h-16 w-16 rounded-2xl object-cover shadow-sm" />
             <div>
               <p className="text-lg font-bold text-ink">HAD Smart</p>
               <p className="text-xs text-ink-muted">High Alert Drug Supervision</p>
