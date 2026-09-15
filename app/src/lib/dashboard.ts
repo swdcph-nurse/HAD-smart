@@ -1,155 +1,140 @@
 import { supabase } from '@/lib/supabase'
-import type { AlertLevel, AlertRecord, ChecklistItem, ChecklistResponse } from '@/lib/types'
 
-export interface AlertWithResponse extends AlertRecord {
-  response: Pick<ChecklistResponse, 'bed_code' | 'shift' | 'performed_by'> | null
+export interface SupervisionRow {
+  id: string
+  created_at: string
+  supervised_total: number | null
+  supervised_critical_passed: boolean | null
+  supervised_scores: unknown
+  self_total: number | null
+  self_critical_passed: boolean | null
+  status: string
+  drug_name: string | null
+  nurse1_name: string | null
+  nurse2_name: string | null
 }
 
-/** Alert ที่ยังไม่ปิด — RLS จะจำกัดตาม ward ให้อัตโนมัติ (admin เห็นทุก ward) */
-export async function fetchOpenAlerts(): Promise<AlertWithResponse[]> {
-  const { data, error } = await supabase
-    .from('alerts')
-    .select('*, response:checklist_responses(bed_code, shift, performed_by)')
-    .is('closed_at', null)
-    .order('opened_at', { ascending: false })
-
-  if (error) throw new Error(`โหลดรายการ Alert ไม่สำเร็จ: ${error.message}`)
-  return (data ?? []) as unknown as AlertWithResponse[]
-}
-
-/** Alert ของฉันเอง (สำหรับพยาบาลดูสถานะที่ตัวเองบันทึกไว้) */
-export async function fetchMyAlerts(userId: string, limit = 20): Promise<AlertWithResponse[]> {
-  const { data, error } = await supabase
-    .from('alerts')
-    .select('*, response:checklist_responses!inner(bed_code, shift, performed_by)')
-    .eq('response.performed_by', userId)
-    .order('opened_at', { ascending: false })
-    .limit(limit)
-
-  if (error) throw new Error(`โหลดรายการ Alert ไม่สำเร็จ: ${error.message}`)
-  return (data ?? []) as unknown as AlertWithResponse[]
-}
-
-export interface CloseAlertInput {
-  alertId: string
-  closedBy: string
-  verifiedBy: string
-  correctiveAction: string
-}
-
-export async function closeAlert(input: CloseAlertInput): Promise<void> {
-  const { error } = await supabase
-    .from('alerts')
-    .update({
-      closed_at: new Date().toISOString(),
-      closed_by: input.closedBy,
-      verified_by: input.verifiedBy,
-      corrective_action: input.correctiveAction,
-    })
-    .eq('id', input.alertId)
-
-  if (error) throw new Error(`ปิด Alert ไม่สำเร็จ: ${error.message}`)
-}
-
-/** สรุปจำนวน response แยกตามระดับ ภายในช่วงวันที่กำหนด (ค่าเริ่มต้น 30 วันล่าสุด) */
-export async function fetchLevelBreakdown(days = 30): Promise<Record<AlertLevel, number>> {
-  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString()
-  const { data, error } = await supabase
-    .from('checklist_responses')
-    .select('computed_level')
-    .gte('created_at', since)
-
-  if (error) throw new Error(`โหลดสรุปข้อมูลไม่สำเร็จ: ${error.message}`)
-
-  const breakdown: Record<AlertLevel, number> = { red: 0, orange: 0, yellow: 0, green: 0 }
-  for (const row of data ?? []) {
-    const level = row.computed_level as AlertLevel
-    breakdown[level] = (breakdown[level] ?? 0) + 1
-  }
-  return breakdown
-}
-
-export interface TrendPoint {
-  date: string
+export interface SupervisionItemStat {
+  no: number
+  text: string
+  critical: boolean
+  pass: number
   total: number
-  alerts: number
+  rate: number
 }
 
-/** จำนวนการบันทึกต่อวัน ย้อนหลัง n วัน — ใช้พล็อตกราฟแนวโน้ม */
-export async function fetchDailyTrend(days = 14): Promise<TrendPoint[]> {
-  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000)
-  since.setHours(0, 0, 0, 0)
-
-  const { data, error } = await supabase
-    .from('checklist_responses')
-    .select('created_at, computed_level')
-    .gte('created_at', since.toISOString())
-
-  if (error) throw new Error(`โหลดข้อมูลแนวโน้มไม่สำเร็จ: ${error.message}`)
-
-  const buckets = new Map<string, TrendPoint>()
-  for (let i = 0; i < days; i++) {
-    const d = new Date(since)
-    d.setDate(d.getDate() + i)
-    const key = d.toLocaleDateString('th-TH', { day: '2-digit', month: '2-digit' })
-    buckets.set(key, { date: key, total: 0, alerts: 0 })
-  }
-
-  for (const row of data ?? []) {
-    const key = new Date(row.created_at).toLocaleDateString('th-TH', { day: '2-digit', month: '2-digit' })
-    const bucket = buckets.get(key)
-    if (!bucket) continue
-    bucket.total += 1
-    if (row.computed_level !== 'green') bucket.alerts += 1
-  }
-
-  return Array.from(buckets.values())
+export interface SupervisionDashboardData {
+  rows: SupervisionRow[]
+  itemStats: SupervisionItemStat[]
+  total: number
+  completed: number
+  complete20: number
+  criticalPass: number
+  completeBoth: number
+  average20: number | null
+  averageCritical: number | null
+  workflowCloseRate: number | null
 }
 
-export interface FailedItemStat {
-  itemId: string
-  itemText: string
-  isCritical: boolean
-  count: number
+export const SUPERVISION_ITEMS = [
+  { no: 1, text: 'ตรวจสอบคำสั่งแพทย์ครบถ้วน: ผู้ป่วย ยา ขนาด วิธีให้ และเวลา', critical: false },
+  { no: 2, text: 'ทำเครื่องหมายชื่อยาความเสี่ยงสูงตามแนวทางของหน่วยงาน', critical: false },
+  { no: 3, text: 'ตรวจสอบรายการยาใน MAR กับคำสั่งแพทย์', critical: false },
+  { no: 4, text: 'Double Check ร่วมกับพยาบาลอีก 1 คนก่อนเตรียมยา', critical: true },
+  { no: 5, text: 'ตรวจสอบวันหมดอายุของยาและสารน้ำก่อนใช้', critical: false },
+  { no: 6, text: 'เตรียมยาในสถานที่สะอาด มีแสงสว่างเพียงพอ และลดสิ่งรบกวน', critical: false },
+  { no: 7, text: 'คำนวณขนาดยา ความเข้มข้น และอัตราการให้ถูกต้อง', critical: false },
+  { no: 8, text: 'ติดฉลาก High-Alert Drug พร้อมชื่อยา ความเข้มข้น และวัน–เวลาผสม', critical: false },
+  { no: 9, text: 'เลือกสารน้ำสำหรับผสมถูกต้องตามแผนการรักษา/แนวทาง', critical: false },
+  { no: 10, text: 'Double Check ที่เตียงผู้ป่วยและยืนยันตัวผู้ป่วยอย่างน้อย 2 ตัวบ่งชี้', critical: true },
+  { no: 11, text: 'เลือกเส้นทางให้ยา Central Line/Peripheral Vein ตามข้อบ่งชี้', critical: false },
+  { no: 12, text: 'ใช้เครื่องควบคุมการให้สารน้ำอัตโนมัติและไม่ปล่อย Free Flow', critical: true },
+  { no: 13, text: 'แนะนำผู้ป่วย/ญาติให้สังเกตอาการผิดปกติจากยา', critical: false },
+  { no: 14, text: 'ปรับขนาดยาหรืออัตราการให้ตามแผนการรักษาอย่างถูกต้อง', critical: false },
+  { no: 15, text: 'บันทึกการให้ยาใน MAR พร้อมลายเซ็นพยาบาล 2 คนตามแนวทาง', critical: false },
+  { no: 16, text: 'ประเมินสัญญาณชีพ ผลตรวจ และอาการไม่พึงประสงค์ตามความถี่ที่กำหนด', critical: true },
+  { no: 17, text: 'ตรวจสอบตำแหน่ง IV Site สม่ำเสมอเพื่อป้องกัน Extravasation', critical: false },
+  { no: 18, text: 'หยุดยา/ช่วยเหลือเบื้องต้นและรายงานแพทย์ทันทีเมื่อพบอาการผิดปกติ', critical: false },
+  { no: 19, text: 'บันทึกผลการเฝ้าระวังและติดตามหลังให้ยาอย่างครบถ้วน', critical: false },
+  { no: 20, text: 'รายงาน Medication Error หรือ Near Miss ตามระบบทันที', critical: false },
+] as const
+
+function asBool(value: unknown): boolean {
+  return value === true || value === 1 || value === 'true'
 }
 
-/** ข้อที่ไม่ผ่าน/ไม่ได้ตอบบ่อยที่สุด ภายในช่วงวันที่กำหนด (top N) */
-export async function fetchTopFailedItems(days = 30, limit = 5): Promise<FailedItemStat[]> {
-  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString()
-  const { data, error } = await supabase
-    .from('checklist_responses')
-    .select('triggered_items')
-    .gte('created_at', since)
-    .neq('computed_level', 'green')
+function asScores(value: unknown): boolean[] {
+  return Array.isArray(value) ? value.map(asBool) : []
+}
 
-  if (error) throw new Error(`โหลดสถิติรายการไม่ผ่านไม่สำเร็จ: ${error.message}`)
+export async function fetchMedicationSupervision(
+  from: string,
+  to: string,
+  drugId?: string,
+): Promise<SupervisionDashboardData> {
+  const end = new Date(`${to}T23:59:59.999`).toISOString()
+  const start = new Date(`${from}T00:00:00.000`).toISOString()
 
-  const tally = new Map<string, number>()
-  for (const row of data ?? []) {
-    const ids = (row.triggered_items ?? []) as string[]
-    for (const id of ids) tally.set(id, (tally.get(id) ?? 0) + 1)
+  let query = supabase
+    .from('medication_assessment_sessions')
+    .select(`id, created_at, supervised_total, supervised_critical_passed, supervised_scores, self_total, self_critical_passed, workflow:medication_workflows!inner(status, drug_id, drug:had_drugs(generic_name), nurse1:staff!medication_workflows_nurse1_id_fkey(name), nurse2:staff!medication_workflows_nurse2_id_fkey(name))`)
+    .gte('created_at', start)
+    .lte('created_at', end)
+    .not('supervised_submitted_at', 'is', null)
+    .order('created_at', { ascending: false })
+    .range(0, 4999)
+
+  if (drugId) query = query.eq('workflow.drug_id', drugId)
+
+  const { data, error } = await query
+  if (error) throw new Error(`โหลดผลการนิเทศไม่สำเร็จ: ${error.message}`)
+
+  const rows: SupervisionRow[] = (data ?? []).map((r: any) => ({
+    id: r.id,
+    created_at: r.created_at,
+    supervised_total: r.supervised_total,
+    supervised_critical_passed: r.supervised_critical_passed,
+    supervised_scores: r.supervised_scores,
+    self_total: r.self_total,
+    self_critical_passed: r.self_critical_passed,
+    status: r.workflow?.status ?? 'completed',
+    drug_name: r.workflow?.drug?.generic_name ?? null,
+    nurse1_name: r.workflow?.nurse1?.name ?? null,
+    nurse2_name: r.workflow?.nurse2?.name ?? null,
+  }))
+
+  const itemStats = SUPERVISION_ITEMS.map((item, index) => {
+    const total = rows.length
+    const pass = rows.reduce((sum, row) => sum + (asScores(row.supervised_scores)[index] ? 1 : 0), 0)
+    return { ...item, total, pass, rate: total ? Math.round((pass / total) * 1000) / 10 : 0 }
+  })
+
+  const completed = rows.filter((r) => r.status === 'completed').length
+  const complete20 = rows.filter((r) => r.supervised_total === 20).length
+  const criticalPass = rows.filter((r) => r.supervised_critical_passed === true).length
+  const completeBoth = rows.filter((r) => r.supervised_total === 20 && r.supervised_critical_passed === true).length
+  const average20 = rows.length ? Math.round((rows.reduce((s, r) => s + (r.supervised_total ?? 0), 0) / rows.length) * 10) / 10 : null
+  const criticalCount = SUPERVISION_ITEMS.filter((i) => i.critical).length
+  const averageCritical = rows.length
+    ? Math.round((rows.reduce((s, r) => s + SUPERVISION_ITEMS.reduce((n, item, i) => n + (item.critical && asScores(r.supervised_scores)[i] ? 1 : 0), 0), 0) / (rows.length * criticalCount)) * 1000) / 10
+    : null
+
+  return {
+    rows,
+    itemStats,
+    total: rows.length,
+    completed,
+    complete20,
+    criticalPass,
+    completeBoth,
+    average20,
+    averageCritical,
+    workflowCloseRate: rows.length ? Math.round((completed / rows.length) * 1000) / 10 : null,
   }
+}
 
-  const topIds = Array.from(tally.entries())
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, limit)
-    .map(([id]) => id)
-
-  if (topIds.length === 0) return []
-
-  const { data: items, error: itemsError } = await supabase
-    .from('checklist_items')
-    .select('id, item_text, is_critical')
-    .in('id', topIds)
-
-  if (itemsError) throw new Error(`โหลดรายละเอียดข้อไม่สำเร็จ: ${itemsError.message}`)
-
-  const itemMap = new Map((items as ChecklistItem[]).map((i) => [i.id, i]))
-  return topIds
-    .map((id) => {
-      const item = itemMap.get(id)
-      if (!item) return null
-      return { itemId: id, itemText: item.item_text, isCritical: item.is_critical, count: tally.get(id) ?? 0 }
-    })
-    .filter((x): x is FailedItemStat => x !== null)
+export async function fetchActiveHadDrugs(): Promise<{ id: string; generic_name: string }[]> {
+  const { data, error } = await supabase.from('had_drugs').select('id, generic_name').eq('is_active', true).order('generic_name')
+  if (error) throw new Error(`โหลดรายการยาไม่สำเร็จ: ${error.message}`)
+  return (data ?? []) as { id: string; generic_name: string }[]
 }
