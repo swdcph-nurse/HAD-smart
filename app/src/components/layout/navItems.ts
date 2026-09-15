@@ -13,10 +13,8 @@ export function getNavItems(role: Role | undefined): NavItem[] {
   if (role === 'admin') {
     return [
       { to: '/', label: 'หน้าแรก', icon: Home },
-      { to: '/dashboard', label: 'แดชบอร์ด', icon: LayoutDashboard },
+      { to: '/dashboard', label: 'แดชบอร์ดผลการนิเทศ', icon: LayoutDashboard },
       { to: '/admin/drugs', label: 'จัดการรายการยา', icon: Pill },
-      { to: '/assessment', label: 'ประเมิน', icon: ClipboardCheck },
-      { to: '/alerts', label: 'Alert', icon: BellRing },
       { to: '/profile', label: 'ผู้ดูแลระบบ', icon: UserRound },
     ]
   }
