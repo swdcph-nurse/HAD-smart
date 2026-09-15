@@ -24,7 +24,13 @@ export function LoginPage() {
     <div className="grid min-h-dvh place-items-center bg-canvas px-5 py-10">
       <div className="w-full max-w-sm">
         <header className="mb-8">
-          <p className="text-xs font-medium tracking-wide text-accent">HAD Smart</p>
+          <div className="mb-5 flex items-center gap-3">
+            <img src="/brand/had-smart.jpg" alt="HAD Smart" className="h-16 w-16 rounded-2xl object-cover shadow-sm" />
+            <div>
+              <p className="text-lg font-bold text-ink">HAD Smart</p>
+              <p className="text-xs text-ink-muted">High Alert Drug Supervision</p>
+            </div>
+          </div>
           <h1 className="mt-1 text-2xl font-semibold text-ink">ผู้ดูแลระบบ</h1>
           <p className="mt-1.5 text-sm leading-relaxed text-ink-muted">เข้าสู่ระบบด้วย Email และรหัสผ่านของบัญชีผู้ดูแลระบบที่ลงทะเบียนไว้</p>
         </header>
