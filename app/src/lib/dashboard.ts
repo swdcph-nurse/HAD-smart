@@ -75,18 +75,12 @@ export async function fetchMedicationSupervision(
   const end = new Date(`${to}T23:59:59.999`).toISOString()
   const start = new Date(`${from}T00:00:00.000`).toISOString()
 
-  let query = supabase
-    .from('medication_assessment_sessions')
-    .select(`id, created_at, supervised_total, supervised_critical_passed, supervised_scores, self_total, self_critical_passed, workflow:medication_workflows!inner(status, drug_id, drug:had_drugs(generic_name), nurse1:staff!medication_workflows_nurse1_id_fkey(name), nurse2:staff!medication_workflows_nurse2_id_fkey(name))`)
-    .gte('created_at', start)
-    .lte('created_at', end)
-    .not('supervised_submitted_at', 'is', null)
-    .order('created_at', { ascending: false })
-    .range(0, 4999)
+  const { data, error } = await supabase.rpc('admin_fetch_medication_supervision', {
+    p_from: start,
+    p_to: end,
+    p_drug_id: drugId || null,
+  })
 
-  if (drugId) query = query.eq('workflow.drug_id', drugId)
-
-  const { data, error } = await query
   if (error) throw new Error(`โหลดผลการนิเทศไม่สำเร็จ: ${error.message}`)
 
   const rows: SupervisionRow[] = (data ?? []).map((r: any) => ({
@@ -97,10 +91,10 @@ export async function fetchMedicationSupervision(
     supervised_scores: r.supervised_scores,
     self_total: r.self_total,
     self_critical_passed: r.self_critical_passed,
-    status: r.workflow?.status ?? 'completed',
-    drug_name: r.workflow?.drug?.generic_name ?? null,
-    nurse1_name: r.workflow?.nurse1?.name ?? null,
-    nurse2_name: r.workflow?.nurse2?.name ?? null,
+    status: r.workflow_status ?? 'completed',
+    drug_name: r.drug_name ?? null,
+    nurse1_name: r.nurse1_name ?? null,
+    nurse2_name: r.nurse2_name ?? null,
   }))
 
   const itemStats = SUPERVISION_ITEMS.map((item, index) => {
