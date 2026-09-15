@@ -4,7 +4,7 @@ import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import { defineConfig } from 'vite'
 
-const HAD_SMART_ICON = '/brand/had-smart.jpg?v=20260916'
+const HAD_SMART_ICON = '/had-smart.png?v=20260916'
 
 export default defineConfig({
   resolve: {
@@ -17,7 +17,7 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['brand/had-smart.jpg'],
+      includeAssets: ['had-smart.png'],
       manifest: {
         name: 'HAD Smart Alert',
         short_name: 'HAD Smart',
@@ -31,8 +31,8 @@ export default defineConfig({
         icons: [
           {
             src: HAD_SMART_ICON,
-            sizes: '256x256',
-            type: 'image/jpeg',
+            sizes: 'any',
+            type: 'image/png',
             purpose: 'any maskable',
           },
         ],
