@@ -3,7 +3,7 @@ import { useAuth } from '@/context/AuthContext'
 import { ROLE_LABEL_TH } from '@/lib/types'
 import { getNavItems } from './navItems'
 
-const HAD_SMART_LOGO = '/brand/had-smart.jpg?v=20260916'
+const HAD_SMART_LOGO = '/had-smart.png?v=20260916'
 
 /** แถบเมนูข้าง — แสดงเฉพาะจอ md ขึ้นไป (แทนที่ BottomNav บนจอมือถือ) */
 export function SideNav() {
