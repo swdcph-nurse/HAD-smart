@@ -4,7 +4,7 @@ import { ROLE_LABEL_TH } from '@/lib/types'
 import { BottomNav } from './BottomNav'
 import { SideNav } from './SideNav'
 
-const HAD_SMART_LOGO = '/brand/had-smart.jpg?v=20260916'
+const HAD_SMART_LOGO = '/had-smart.png?v=20260916'
 
 export function AppShell() {
   const { profile, signOut } = useAuth()
