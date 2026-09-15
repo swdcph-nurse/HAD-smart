@@ -9,9 +9,9 @@
   "theme_color": "#0f766e",
   "icons": [
     {
-      "src": "/brand/had-smart.jpg?v=20260916",
-      "sizes": "256x256",
-      "type": "image/jpeg",
+      "src": "/had-smart.png?v=20260916",
+      "sizes": "any",
+      "type": "image/png",
       "purpose": "any maskable"
     }
   ]
