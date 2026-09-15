@@ -17,9 +17,12 @@ import { AssessmentPage } from '@/pages/assessment/AssessmentPage'
 import { RoleGate } from '@/components/layout/RoleGate'
 import { KioskPage } from '@/pages/KioskPage'
 import { DrugManagementPage } from '@/pages/DrugManagementPage'
+import { PublicDrugLearningPage } from '@/pages/PublicDrugLearningPage'
+
 export default function App() {
   return <BrowserRouter><AuthProvider><Routes>
     <Route path="/" element={<LandingPage />} />
+    <Route path="/learn/:drugId" element={<PublicDrugLearningPage />} />
     <Route path="/nurse" element={<NurseRolePage />} />
     <Route path="/nurse/med" element={<MedicationKioskPage />} />
     <Route path="/nurse/charge" element={<MedicationKioskPage />} />
