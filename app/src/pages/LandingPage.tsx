@@ -1,5 +1,7 @@
 import { useNavigate } from 'react-router-dom'
-import { ArrowRight, LockKeyhole, Pill, ShieldCheck, Stethoscope, UserRound } from 'lucide-react'
+import { ArrowRight, LockKeyhole, ShieldCheck, Stethoscope, UserRound } from 'lucide-react'
+
+const HAD_SMART_LOGO = '/had-smart.png?v=20260916'
 
 export function LandingPage() {
   const navigate = useNavigate()
@@ -8,9 +10,11 @@ export function LandingPage() {
       <main className="mx-auto flex min-h-dvh max-w-6xl items-center px-5 py-10 md:px-8">
         <div className="w-full">
           <section className="mx-auto max-w-4xl text-center">
-            <div className="mx-auto grid h-20 w-20 place-items-center rounded-[28px] bg-teal-700 text-white shadow-xl shadow-teal-900/15">
-              <Pill size={38} />
-            </div>
+            <img
+              src={HAD_SMART_LOGO}
+              alt="HAD Smart"
+              className="mx-auto h-20 w-20 rounded-[28px] object-cover shadow-xl"
+            />
             <p className="mt-6 text-sm font-bold tracking-[0.18em] text-teal-700">SWD • NURSING DIGITAL SAFETY</p>
             <h1 className="mt-3 text-4xl font-black tracking-tight md:text-6xl">HAD Smart</h1>
             <p className="mx-auto mt-4 max-w-2xl text-lg font-medium text-slate-600 md:text-xl">
