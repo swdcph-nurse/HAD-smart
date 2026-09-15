@@ -32,6 +32,20 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* ใช้ภาพ HAD Smart ที่ผู้ใช้เป็นเจ้าของแทนไอคอนรูปยาใน header ของ Nurse/Kiosk workflow */
+header .grid:has(> svg.lucide-pill) {
+  background-image: url('/had-smart.png?v=20260916');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  color: transparent;
+  box-shadow: 0 2px 8px rgba(15, 118, 110, .16);
+}
+
+header .grid:has(> svg.lucide-pill) > svg.lucide-pill {
+  display: none;
+}
+
 button:not(:disabled) {
   transition: background-color .16s ease, color .16s ease, border-color .16s ease, box-shadow .16s ease, transform .16s ease, opacity .16s ease;
 }
