@@ -13,14 +13,17 @@ export function AppShell() {
 
       <div className="flex min-h-dvh min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-10 border-b border-border bg-surface/95 backdrop-blur md:hidden">
-          <div className="flex w-full items-center justify-between gap-3 px-4 py-3 sm:px-6">
-            <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-ink">HAD Smart Alert</p>
-              {profile && (
-                <p className="truncate text-xs text-ink-muted">
-                  {profile.display_code} · {ROLE_LABEL_TH[profile.role]}
-                </p>
-              )}
+          <div className="flex w-full items-center justify-between gap-3 px-4 py-2.5 sm:px-6">
+            <div className="flex min-w-0 items-center gap-2.5">
+              <img src="/brand/had-smart.jpg" alt="HAD Smart" className="h-10 w-10 shrink-0 rounded-lg object-cover shadow-sm" />
+              <div className="min-w-0">
+                <p className="truncate text-sm font-bold text-ink">HAD Smart</p>
+                {profile && (
+                  <p className="truncate text-xs text-ink-muted">
+                    {profile.display_code} · {ROLE_LABEL_TH[profile.role]}
+                  </p>
+                )}
+              </div>
             </div>
             <button
               onClick={() => void signOut()}
