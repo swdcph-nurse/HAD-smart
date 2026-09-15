@@ -4,6 +4,8 @@ import { ROLE_LABEL_TH } from '@/lib/types'
 import { BottomNav } from './BottomNav'
 import { SideNav } from './SideNav'
 
+const HAD_SMART_LOGO = '/brand/had-smart.jpg?v=20260916'
+
 export function AppShell() {
   const { profile, signOut } = useAuth()
 
@@ -15,7 +17,7 @@ export function AppShell() {
         <header className="sticky top-0 z-10 border-b border-border bg-surface/95 backdrop-blur md:hidden">
           <div className="flex w-full items-center justify-between gap-3 px-4 py-2.5 sm:px-6">
             <div className="flex min-w-0 items-center gap-2.5">
-              <img src="/brand/had-smart.jpg" alt="HAD Smart" className="h-10 w-10 shrink-0 rounded-lg object-cover shadow-sm" />
+              <img src={HAD_SMART_LOGO} alt="HAD Smart" className="h-10 w-10 shrink-0 rounded-lg object-cover shadow-sm" />
               <div className="min-w-0">
                 <p className="truncate text-sm font-bold text-ink">HAD Smart</p>
                 {profile && (
