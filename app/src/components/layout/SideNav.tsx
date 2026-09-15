@@ -3,6 +3,8 @@ import { useAuth } from '@/context/AuthContext'
 import { ROLE_LABEL_TH } from '@/lib/types'
 import { getNavItems } from './navItems'
 
+const HAD_SMART_LOGO = '/brand/had-smart.jpg?v=20260916'
+
 /** แถบเมนูข้าง — แสดงเฉพาะจอ md ขึ้นไป (แทนที่ BottomNav บนจอมือถือ) */
 export function SideNav() {
   const { profile, signOut } = useAuth()
@@ -12,7 +14,7 @@ export function SideNav() {
     <aside className="hidden w-64 shrink-0 border-r border-border bg-surface md:flex md:flex-col">
       <div className="border-b border-border px-5 py-4">
         <div className="flex items-center gap-3">
-          <img src="/brand/had-smart.jpg" alt="HAD Smart" className="h-12 w-12 shrink-0 rounded-xl object-cover shadow-sm" />
+          <img src={HAD_SMART_LOGO} alt="HAD Smart" className="h-12 w-12 shrink-0 rounded-xl object-cover shadow-sm" />
           <div className="min-w-0">
             <p className="truncate text-sm font-bold text-ink">HAD Smart</p>
             <p className="mt-0.5 text-[11px] leading-4 text-ink-muted">ระบบนิเทศการบริหารยาความเสี่ยงสูง</p>
