@@ -4,7 +4,8 @@ import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import { defineConfig } from 'vite'
 
-// https://vite.dev/config/
+const HAD_SMART_ICON = '/brand/had-smart.jpg?v=20260916'
+
 export default defineConfig({
   resolve: {
     alias: {
@@ -16,23 +17,32 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg'],
+      includeAssets: ['brand/had-smart.jpg'],
       manifest: {
         name: 'HAD Smart Alert',
-        short_name: 'HAD Alert',
+        short_name: 'HAD Smart',
         description: 'ระบบนิเทศการบริหารยาความเสี่ยงสูง (High Alert Drug) พร้อมระบบแจ้งเตือนอัจฉริยะ',
-        theme_color: '#16324F',
-        background_color: '#F7F8FA',
+        theme_color: '#0f766e',
+        background_color: '#ffffff',
         display: 'standalone',
         orientation: 'portrait',
         start_url: '/',
+        scope: '/',
         icons: [
-          { src: 'favicon.svg', sizes: 'any', type: 'image/svg+xml' },
+          {
+            src: HAD_SMART_ICON,
+            sizes: '256x256',
+            type: 'image/jpeg',
+            purpose: 'any maskable',
+          },
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,svg,png,ico}'],
+        globPatterns: ['**/*.{js,css,html,svg,png,ico,jpg,jpeg}'],
         navigateFallback: '/index.html',
+        skipWaiting: true,
+        clientsClaim: true,
+        cleanupOutdatedCaches: true,
         runtimeCaching: [
           {
             urlPattern: ({ url }) => url.pathname.startsWith('/rest/v1/'),
